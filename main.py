@@ -3,6 +3,8 @@ import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from call_function import available_functions
+from prompts import system_prompt
 
 
 def main():
@@ -31,12 +33,18 @@ def main():
 
 
 def generate_content(client, messages, verbose):
+
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt,
+        ),
     )
 
-    print(response.text)
+    for function_call_part in response.function_calls:
+        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
 
     if verbose:
         if response.usage_metadata is not None:
